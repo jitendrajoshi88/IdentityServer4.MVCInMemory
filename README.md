@@ -1,6 +1,6 @@
 **Packages:**
 1) IdentityServer4 (Open ID Connect in ASP .NET Core)
-2) ASP .NET Identity (For User Store in ASP .NET)
+2) IdentityServer4.AspNetIdentity (For User Store in ASP .NET)
 3) Serilog.AspNetCore (For logging)
 4) IdentityServer4.EntityFramework (Entity Framework support for Identity Server application)
 5) Microsoft.EntityFrameworkCore.SqlServer (SQL Server Database Provider for EF Core)
@@ -15,11 +15,15 @@ Third generation of Open ID after Open ID 2.0, is primarily based on OAuth 2.0 a
 OpenID Connect performs many of the same tasks as OpenID 2.0, but in an API-friendly way, and usable by native and mobile applications.
 
 **OAuth 2.0 Terminology:**
-1) Client: it’s the software like web-browser, mobile app and any code that requests a resource.
-2) Resources: what you want to protect using identityserver4
-3) Access Token: it is the token that is used by a client to access the API resource.
-4) Refresh Token: each access token has an expiry date. The refresh token is used to get a new access token without the user interaction.
-5) Grant Type: it is the type of interaction between the client and the IdentityServer. based on your client you should choose the suitable grant type.
+1) Client: it’s the software like web-browser, mobile app and any code that requests a resource. each client is identified by unique client_id.
+2) User Agent: A web browser, or some other type of framework that hosts Client applications.
+3) Resources: what you want to protect using identityserver4
+4) Access Token: it is the token that is used by a client to access the API resource.
+5) Refresh Token: each access token has an expiry date. The refresh token is used to get a new access token without the user interaction.
+6) Grant Type: it is the type of interaction between the client and the IdentityServer. based on your client you should choose the suitable grant type.
+7) Resource Server: Web server that hosts and authorizes client access to a Resource Owner’s request based on an Access Token's client_id, user-identity and granted scope.
+8) Authorization Server: A server that validates a Resource Owner's credentials. Maintaining a list of registered Clients and Resource Servers, it calls on an Authentication Server for identity verification. If authorization is successful, it issues access tokens to a Client on behalf of the Resource Owner.
+9) Authentication Server: A server that is used by an Authorization Server to authenticate the Resource Owner's identity. Oncer the Resource Owner's identity is authenticated, the Authorization Server can continue its authorization process for issuing an access token.
 
 **Why to choose Identity Server 4:**
 
@@ -45,17 +49,7 @@ Supported scops, claims, grant types, response types, response modes, auth metho
 
 **Useful Startup Configurations:**
 
-1) IdentityServer4 using InMemory Data Store
-
-      var builder = services.AddIdentityServer(options =>
-      {
-          options.EmitStaticAudienceClaim = true;
-      })
-          .AddInMemoryIdentityResources(Config.IdentityResources)
-          .AddInMemoryApiScopes(Config.ApiScopes)
-          .AddInMemoryClients(Config.Clients);
-                
-2) IdentityServer4 using SQL Server Entity Framework Data Store
+1) IdentityServer4 using SQL Server Entity Framework Data Store
 
       var builder = services.AddIdentityServer(options =>
       {
@@ -80,6 +74,23 @@ Supported scops, claims, grant types, response types, response modes, auth metho
         options.ConfigureDbContext = b => b.UseSqlServer(connectionString, sql => sql.MigrationsAssembly(migrationsAssembly));
         options.EnableTokenCleanup = true;
       });
+
+**Identity Server4 Database Migrations** 
+1) Generate Migration Script
+add-Migration InitialPersistedGrantDbMigration -c PersistedGrantDbContext -o Data/Migrations/IdentityServer/PersistedGrantDb
+Add-Migration InitialConfigurationDbMigration -c ConfigurationDbContext -o Data/Migrations/IdentityServer/ConfigurationDb
+--Note: Specifying DB Context names are mendatory because of more then one context is found.
+
+2) Execute Migration Script
+Update-Database -Context PersistedGrantDbContext
+Update-Database -Context ConfigurationDbContext
+
+**Why ASP.NET Core Identity?**
+Because Identity Server4 doesn't provide user store.
+
+
+
+
 
 
 
