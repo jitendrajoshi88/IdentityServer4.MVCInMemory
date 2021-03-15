@@ -1,3 +1,11 @@
+**Packages:**
+1) IdentityServer4 (Open ID Connect in ASP .NET Core)
+2) ASP .NET Identity (For User Store in ASP .NET)
+3) Serilog.AspNetCore (For logging)
+4) IdentityServer4.EntityFramework (Entity Framework support for Identity Server application)
+5) Microsoft.EntityFrameworkCore.SqlServer (SQL Server Database Provider for EF Core)
+6) Microsoft.EntityFrameworkCore.Tools (cmd based set of tools useful for migrations, generate code for a model from existing database etc)
+
 **What is IdentityServer4?**
 IdentityServer4 is an OpenID Connect and OAuth 2.0 Framework for ASP.NET Core.
 
@@ -15,15 +23,65 @@ OpenID Connect performs many of the same tasks as OpenID 2.0, but in an API-frie
 
 **Why to choose Identity Server 4:**
 
-Authentication as a Service: Centralized login logic and workflow for all of your applications (web, native, mobile, services).
-Single Sign-on / Sign-out: Single sign-on (and out) over multiple application types.
-Access Control for APIs: Issue access tokens for APIs for various types of clients.
-Federation Gateway: Support for external identity providers like Azure Active Directory, Google, Facebook etc. This shields your applications from the details of how to connect to these external providers.
-Focus on Customization: Many aspects of IdentityServer can be customized to fit your needs. Since IdentityServer is a framework and not a boxed product or a SaaS, you can write code to adapt the system the way it makes sense for your scenarios.
-Mature Open Source: IdentityServer uses the permissive Apache 2 license that allows building commercial products on top of it. It is also part of the .NET Foundation which provides governance and legal backing.
-Free and Commercial Support
+a) Authentication as a Service: Centralized login logic and workflow for all of your applications (web, native, mobile, services).
+b) Single Sign-on / Sign-out: Single sign-on (and out) over multiple application types.
+c) Access Control for APIs: Issue access tokens for APIs for various types of clients.
+d) Federation Gateway: Support for external identity providers like Azure Active Directory, Google, Facebook etc.
+e) Focus on Customization: Many aspects of IdentityServer can be customized to fit your needs.
+f) Mature Open Source: IdentityServer uses the permissive Apache 2 license that allows building commercial products on top of it.
+g) Free and Commercial Support
 
-**Important Component of Identity Server4 Application:-**
+**Why to choose ASP .NET Identity:**
+Any running Identity Server Application has 3 datastores:
+a) configuration data store (client store, api and identity resource store, CORS policy store)
+b) operational data store (persisted grants store for tokens, codes and consents)
+c) user data store
+**Identity Server 4 only provides configuration & operational store. For user datastore, we uses ASP .NET Identity.**
+
+**Important aspects of Identity Server4 Application:-**
 
 1) Discovery document: Useful for clients while using IdentityServer4 applications as their provider. List of all endpoints like authorization endpoints, token endpoints etc.
 Supported scops, claims, grant types, response types, response modes, auth methods, token signing algorithms etc.
+
+**Useful Startup Configurations:**
+
+1) IdentityServer4 using InMemory Data Store
+
+      var builder = services.AddIdentityServer(options =>
+      {
+          options.EmitStaticAudienceClaim = true;
+      })
+          .AddInMemoryIdentityResources(Config.IdentityResources)
+          .AddInMemoryApiScopes(Config.ApiScopes)
+          .AddInMemoryClients(Config.Clients);
+                
+2) IdentityServer4 using SQL Server Entity Framework Data Store
+
+      var builder = services.AddIdentityServer(options =>
+      {
+        options.Events.RaiseErrorEvents = true;
+        options.Events.RaiseInformationEvents = true;
+        options.Events.RaiseFailureEvents = true;
+        options.Events.RaiseSuccessEvents = true;
+        options.UserInteraction.LoginUrl = "/Account/Login";
+        options.UserInteraction.LogoutUrl = "/Account/Logout";
+        options.Authentication = new AuthenticationOptions()
+        {
+          CookieLifetime = TimeSpan.FromHours(10), // ID server cookie timeout set to 10 hours
+          CookieSlidingExpiration = true
+        };
+      })
+      .AddConfigurationStore(options =>
+      {
+        options.ConfigureDbContext = b => b.UseSqlServer(connectionString, sql => sql.MigrationsAssembly(migrationsAssembly));
+      })
+      .AddOperationalStore(options =>
+      {
+        options.ConfigureDbContext = b => b.UseSqlServer(connectionString, sql => sql.MigrationsAssembly(migrationsAssembly));
+        options.EnableTokenCleanup = true;
+      });
+
+
+
+
+
